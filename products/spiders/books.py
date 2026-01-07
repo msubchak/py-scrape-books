@@ -18,12 +18,28 @@ class ProductsSpider(scrapy.Spider):
             yield response.follow(next_page, callback=self.parse)
 
     def parse_book(self, response):
+        title = response.css("h1::text").get()
+
+        price_text = response.css(".price_color::text").get()
+        price = price_text.replace("£", "") if price_text else None
+
+        amount_in_stock = response.css(".instock::text").re_first(r'\d+')
+
+        rating_class = response.css(".star-rating::attr(class)").get()
+        rating = rating_class.split()[-1] if rating_class else None
+
+        category_list = response.css("ul.breadcrumb li a::text").getall()
+        category = category_list[-1] if category_list else None
+
+        description = response.css("#product_description + p::text").get()
+        upc = response.css(".table-striped tr:nth-child(1) td::text").get()
+
         yield {
-            "title": response.css("h1::text").get(),
-            "price": response.css(".price_color::text").get().replace("£", ""),
-            "amount_in_stock": response.css(".instock::text").re_first(r'\d+'),
-            "rating": response.css(".star-rating::attr(class)").get().split()[-1],
-            "category": response.css("ul.breadcrumb li a::text")[-1].get(),
-            "description": response.css("#product_description + p::text").get(),
-            "upc": response.css(".table-striped tr:nth-child(1) td::text").get(),
+            "title": title,
+            "price": price,
+            "amount_in_stock": amount_in_stock,
+            "rating": rating,
+            "category": category,
+            "description": description,
+            "upc": upc,
         }
